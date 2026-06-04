@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leerplatform</title>
+<style>
+body {
+  margin:0;
+  font-family: Arial, sans-serif;
+  background:#1a1a2e;
+  color:white;
+}
+#menu {
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+}
+.grid {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(140px,1fr));
+  gap:20px;
+  max-width:700px;
+  width:90%;
+}
+.level {
+  padding:25px;
+  border:none;
+  border-radius:15px;
+  background:#16213e;
+  color:white;
+  font-size:1.2rem;
+  cursor:pointer;
+}
+.level:hover {
+  transform:scale(1.05);
+}
+#game {
+  display:none;
+  width:100%;
+  height:100vh;
+}
+</style>
+</head>
+<body>
+
+<div id="menu">
+<h1>Kies een niveau</h1>
+<div class="grid">
+<button class="level" onclick="startLevel(1)">Niveau 1</button>
+<button class="level" onclick="alert('Nog niet beschikbaar')">Niveau 2</button>
+<button class="level" onclick="alert('Nog niet beschikbaar')">Niveau 3</button>
+<button class="level" onclick="alert('Nog niet beschikbaar')">Niveau 4</button>
+<button class="level" onclick="alert('Nog niet beschikbaar')">Niveau 5</button>
+<button class="level" onclick="alert('Nog niet beschikbaar')">Niveau 6</button>
+</div>
+</div>
+
+<iframe id="game"></iframe>
+
+<script>
+function startLevel(level){
+  if(level!==1) return;
+
+  document.getElementById('menu').style.display='none';
+  const frame=document.getElementById('game');
+  frame.style.display='block';
+
+  const doc=frame.contentWindow.document;
+  doc.open();
+  doc.write(`<!doctype html>
+<html lang="nl" class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spelling</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"><\/script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"><\/script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&amp;family=DM+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet">
+  <style>
+    @keyframes pulse-green { 0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,0.4)} 50%{box-shadow:0 0 0 12px rgba(34,197,94,0)} }
+    @keyframes pulse-red { 0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,0.4)} 50%{box-shadow:0 0 0 12px rgba(239,68,68,0)} }
+    @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes timerWarning { 0%,100%{background:#e94560;} 50%{background:#ff6b7a;} }
+    .correct-pulse { animation: pulse-green 0.6s ease; }
+    .wrong-pulse { animation: pulse-red 0.6s ease; }
+    .slide-in { animation: slideIn 0.3s ease; }
+    .timer-warning { animation: timerWarning 0.6s ease infinite; }
+    @keyframes comboZoom { 0%{transform:scale(1);} 50%{transform:scale(1.15);} 100%{transform:scale(1);} }
+    .combo-pop { animation: comboZoom 0.4s ease; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+</head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto flex flex-col items-center justify-center p-6" style="background: #1a1a2e; font-family: 'DM Sans', sans-serif;">
+   <div class="w-full max-w-md text-center slide-in">
+    <h1 id="title" class="text-3xl font-bold mb-2" style="font-family: 'Space Mono', monospace; color: #e94560;">Spelling</h1>
+    <p class="text-sm mb-8" style="color: #7a7a9d;">Luister naar het woord en typ het juist</p>
+    <div class="rounded-2xl p-6 mb-6" style="background: #16213e; border: 1px solid #2a2a4a; width: 100%; max-width: 600px;">
+     <div class="flex justify-between items-center mb-6">
+      <div class="flex items-center gap-2" style="color: #e94560;">
+       <i data-lucide="trophy" style="width:20px;height:20px;"></i> <span id="score" class="text-xl font-bold">0</span>
+      </div>
+      <div class="flex items-center gap-2" style="color: #22c55e;" id="comboContainer">
+       <i data-lucide="zap" style="width:18px;height:18px;"></i> <span id="combo" class="text-sm font-bold">0x</span>
+      </div>
+     </div>
+     <div id="gridContainer" class="grid grid-cols-5 gap-3 mb-6"></div>
+     <div id="inputWrap" class="relative">
+      <input id="wordInput" type="text" autocomplete="off" autofocus class="w-full text-center text-2xl font-bold py-3 px-4 rounded-xl border-2 outline-none transition-all" style="background: #0f3460; border-color: #2a2a4a; color: #fff; font-family: 'Space Mono', monospace;" placeholder="typ hier...">
+     </div>
+     <div id="feedback" class="mt-4 h-6 text-sm font-medium"></div>
+    </div>
+   </div>
+  </div>
+  <script>
+const words = ["en","een","het","van","in","is","hij","zijn","dat","ik","op","was","die","niet","met","maar","er","voor","zij","ben","aan","naar","wees","haar","ook","om","dan","wat","of","nog","bij","door","hem","uit","zei","wel","zou","kan","mijn","dit","hun","geen","kon","al","toen","daar","tot","meer","weer","zal","gaan","moet","veel","kun","gaat","hoe","mij","heel","waar","zul","zien","hier","wil","doen","zag","kom","jaar","mee","jij","zeg","dag","wij","weet","man","men","af","dus","zie","ziet","weg","keek","toe","laat","wie","doet","huis","doe","liet","zit","zat","net","maak","gaf","hen","keer","liep","wou","paar","zon","mag","nou","kijk","vaak","heen","nam","nee","riep","lag","geef","uur","deur","vol","hoor","jou","neem","naam","viel","ver","zeer","oog","leek","boek","pas","deel","vier","zin","week","loop","lig","leuk","hoog","voel","zee","vijf","heet","zoon","tien","zet","eer","bos","diep","ken","boom","rug","los","neer","val","zaak","dier","kop","gek","jouw","gauw","leef","wit","zoek","feit","lijk","pijn","raam","zes","noem","neus","haal","tuin","vuur","leg","rol","heer","zak","wijn","lees","boos","voet","maan","leer","ziek","fijn","lief","eet","hoop","reis","doel","taal","muur","las","roep","kat","hou","wet","boer","pak","boot","oom","baas","hoek","rijk","hoef","laag","dik","at","been","ruim","leeg","vis","moe","taak","juf","dak","wijs","buik","hout","oor","koop","gat","rij","maal","duur","bal","lijn","raak","mis","lijf","boog","nek","woon","bus","jas","voer","bel","raar","ijs","min","toon","baan","koos","zaal","geur","kies","mei","keel","dom","top","ziel","tas","tak","les","nat","zout","koe","let","beet","bier","doos","vos","heus","meen","rook","touw","mes","won","beer","reus","maag","lot","kip","zus","kaas","fout","muis","hut","kou","poes","aap","bouw","vet","vaag","bek","geel","soep","zoet","neen","das","hal","den","hol","fel","huil","pan","hief","pot","lip","vak","hek","dol","gas","kus","maat","haat","vies","poot","eis","vel","ren","pap","haas","as","tik","mam","dook","koel","dun","boel","dal","hof","pop","boem","duim","voeg","bom","ton","kin","roos","nauw","kaal","tel","win","neef","dief","vuil","teen","poos","hel","bak","tuur","haan","doek","joeg","vul","bar","bijt","hap","pen","pijl","pet","war","tip","wal","zoen","duif","loon","keus","piet","lol","buig","uil","bol","kuil","lui","ruik","wier","put","hok","gil","luk","koor","piep","dek","wek","gaaf","hop","ruk","poep","paus","vee","duik","vat","mouw","wei","zeep","puur","kook","rok","pijp","waag","kar","bot","nul","ruit","riem","geit","riet","rat","vaar","nut","bijl","ras","zuur","meet","koek","ruil","haak","som","rot","wijk","wiel","tal","beek","gif","rijp","wol","goot","wen","jaag","buit","paal","woog","kok","roer","daal","rit","loog","hef","pil","rauw","zeil","raaf","noot","tok","buis","veeg","os","leun","doof","dijk","mus","zoog","eik","hei","hiep","wieg","mos","big","kier","heil","lieg","hak","lies","meel","giet","leen","bil","deeg","til","veer","wee","kaak","mug","lap","hup","toet","mees","bui","kool","non","heup","boe","kil","mier","sap","mijl","hees","huur","vaas","wip","mal","ham","weeg","pool","saus","rek","beef","puin","hijg","peer","kas","teer","gun","kam","dof","bok","mol","dam","zuig","tof","heg","kei","luik","peil","vouw","wijf","buur","es","pik","ree","lam","dop","lijm","roem","zoem","pal","rouw","woef","boon","beul","laf","boef","rem","mop","hik","zeur","fee","jeuk","ban","zuil","laan","bon","lik","raap","room","tam","lauw","lok","hit","pup","kap","baat","boeg","wuif","nep","hip","duin","nier","veen","deuk","rap","roet","vin","faal","gaar","tol","buk","pauw","kous","roes","doop","lof","rein","map","ween","ram","suf","sok","waas","tuig","ruig","dauw","waak","poog","sein","pit","rum","raas","dor","hijs","hiel","gier","kauw","reep","muil","sip","fit","aas","sis","luis","teef","gaas","boor","loom","lef","kuur","zeef","lak","gal","poen","tor","ijl","lek","piek","baal","gaap","waan","ril","kuip","loos","reuk","ven","tijm","toer","rijm","ruis","lat","gen","hes","sus","zot","tuut","lus","keur","fuik","mep","beu","oen","beuk","kiem","suis","deug","kuit","teek","loep","zoom","faam","log","gul","poel","bes","puf","maf","vaat","paf","pier","roof","kaap","kik","zeis","vaal","tin","roe","nis","kiel","gok","peuk","poef","dein","nok","geil","tuit","por","zool","sop","goor","gum","teil","lier","keet","zaag","lei","wis","mik","kuif","duf","leem","moer","haag","sier","pek","woel","bof","tier","loof","mak","biet","gein","juk","fok","tij","muf","bit","nies","geul","zeug","rif","nar","kuis","weef","fik","rijg","rel","aar","tap","buil","guur","pel","wak","hoes","leus","pin","fuif","dip","rui","pees","tem","aal","wok","reeg","joel","dij","boen","bout","jok","iep","pook","wiek","vaan","vijl","uk","mie","vijg","jat","sik","zeul","lel","deun","zoef","rog","pus","peen","iel","peul","fop","zeem"];
+
+let score = 0;
+let round = 1;
+let currentWord = '';
+let combo = 0;
+let selectedBox = null;
+let boxes = [];
+let boxStates = {};
+
+function getBoxColor(attempts) {
+  if (attempts === 1) return { bg: '#22c55e', text: '#166534', border: '#22c55e' };
+  if (attempts === 2) return { bg: '#86efac', text: '#166534', border: '#86efac' };
+  if (attempts === 3) return { bg: '#facc15', text: '#713f12', border: '#facc15' };
+  if (attempts === 4) return { bg: '#fb923c', text: '#7c2d12', border: '#fb923c' };
+  return { bg: '#ef4444', text: '#fff', border: '#ef4444' };
+}
+
+function createGrid() {
+  const grid = document.getElementById('gridContainer');
+  grid.innerHTML = '';
+  boxes = [];
+  boxStates = {};
+  
+  const selectedWords = [];
+  for (let i = 0; i < 20; i++) {
+    selectedWords.push(words[Math.floor(Math.random() * words.length)]);
+  }
+  
+  selectedWords.forEach((word, idx) => {
+    const box = document.createElement('button');
+    box.className = 'w-full aspect-square rounded-lg flex items-center justify-center text-sm font-bold transition-all cursor-pointer hover:scale-105 active:scale-95';
+    box.style.background = '#0f3460';
+    box.style.color = '#7a7a9d';
+    box.style.border = '2px solid #2a2a4a';
+    box.textContent = '🔊';
+    box.dataset.word = word;
+    box.dataset.idx = idx;
+    
+    boxStates[idx] = { word: word, completed: false, attempted: false, attempts: 0 };
+    
+    box.addEventListener('click', () => selectBox(box, word, idx));
+    grid.appendChild(box);
+    boxes.push(box);
+  });
+  
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('wordInput').value = '';
+  document.getElementById('inputWrap').className = 'relative';
+}
+
+function selectBox(box, word, idx) {
+  if (boxStates[idx].completed) {
+    return;
+  }
+  
+  boxes.forEach(b => {
+    const bIdx = parseInt(b.dataset.idx);
+    if (!boxStates[bIdx].completed && !boxStates[bIdx].attempted) {
+      b.style.background = '#0f3460';
+      b.style.color = '#7a7a9d';
+      b.style.borderColor = '#2a2a4a';
+    }
+  });
+  
+  selectedBox = box;
+  box.style.background = '#2a2a4a';
+  box.style.color = '#fff';
+  box.style.borderColor = '#e94560';
+  
+  currentWord = word;
+  selectedBox.dataset.currentIdx = idx;
+  document.getElementById('feedback').textContent = '';
+  document.getElementById('wordInput').value = '';
+  
+  speak(word);
+}
+
+function updateComboDisplay() {
+  const comboContainer = document.getElementById('comboContainer');
+  if (combo > 0) {
+    comboContainer.style.display = 'flex';
+    document.getElementById('combo').textContent = combo + 'x';
+  } else {
+    comboContainer.style.display = 'none';
+  }
+}
+
+function speak(word) {
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'nl-BE';
+  u.rate = 0.4;
+  u.pitch = 0.9;
+  u.volume = 1.0;
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+document.getElementById('wordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    if (!selectedBox) {
+      document.getElementById('feedback').innerHTML = `<span style="color:#ef4444;">Kies eerst een vakje!</span>`;
+      return;
+    }
+    
+    const val = e.target.value.trim().toLowerCase();
+    const wrap = document.getElementById('inputWrap');
+    const fb = document.getElementById('feedback');
+    const idx = parseInt(selectedBox.dataset.currentIdx);
+    
+    if (val === currentWord) {
+      combo++;
+      score += combo;
+      document.getElementById('score').textContent = score;
+      updateComboDisplay();
+      
+      const comboText = combo > 1 ? `<span style="color:#22c55e;">✓ Correct! ${combo}x combo!</span>` : `<span style="color:#22c55e;">✓ Correct!</span>`;
+      fb.innerHTML = comboText;
+      wrap.className = 'relative correct-pulse';
+      
+      if (combo > 1) {
+        document.getElementById('combo').classList.add('combo-pop');
+        setTimeout(() => document.getElementById('combo').classList.remove('combo-pop'), 400);
+      }
+      
+      boxStates[idx].attempts++;
+      boxStates[idx].completed = true;
+      boxStates[idx].attempted = false;
+      selectedBox.style.pointerEvents = 'none';
+      
+      const colors = getBoxColor(boxStates[idx].attempts);
+      selectedBox.style.background = colors.bg;
+      selectedBox.style.color = colors.text;
+      selectedBox.style.borderColor = colors.border;
+      selectedBox.textContent = '✓';
+      
+      selectedBox = null;
+      document.getElementById('wordInput').value = '';
+      
+      setTimeout(() => {
+        const allCompleted = Object.values(boxStates).every(state => state.completed);
+        if (allCompleted) {
+          showGameOver();
+        }
+      }, 800);
+    } else {
+      combo = 0;
+      updateComboDisplay();
+      fb.innerHTML = `<span style="color:#ef4444;">✗ Fout! Het was: <strong>${currentWord}</strong></span>`;
+      wrap.className = 'relative wrong-pulse';
+      
+      boxStates[idx].attempts++;
+      boxStates[idx].attempted = true;
+      selectedBox.style.background = '#ef4444';
+      selectedBox.style.color = '#fff';
+      selectedBox.style.borderColor = '#ef4444';
+      selectedBox.style.pointerEvents = 'auto';
+      selectedBox.textContent = '✗';
+      document.getElementById('wordInput').value = '';
+    }
+    
+    round++;
+  }
+});
+
+function showGameOver() {
+  const gameContainer = document.querySelector('.w-full.max-w-md');
+  gameContainer.innerHTML = `
+    <div class="text-center slide-in">
+      <h1 class="text-4xl font-bold mb-4" style="font-family: 'Space Mono', monospace; color: #22c55e;">🎉 Klaar!</h1>
+      <div class="rounded-2xl p-8 mb-6" style="background: #16213e; border: 1px solid #2a2a4a;">
+        <p class="text-sm mb-4" style="color: #7a7a9d;">Eindstand</p>
+        <div class="text-6xl font-bold mb-2" style="color: #e94560;">${score}</div>
+        <p class="text-sm" style="color: #7a7a9d;">punten behaald</p>
+      </div>
+      <button id="playAgainBtn" class="w-full py-3 px-6 rounded-xl font-bold transition-all" style="background: #e94560; color: #fff; border: none; cursor: pointer; font-size: 1.1rem;">
+        Opnieuw spelen
+      </button>
+    </div>
+  `;
+  
+  const btn = document.getElementById('playAgainBtn');
+  btn.onclick = playAgain;
+}
+
+function playAgain() {
+  score = 0;
+  combo = 0;
+  round = 1;
+  document.getElementById('score').textContent = '0';
+  updateComboDisplay();
+  
+  const gameContainer = document.querySelector('.w-full.max-w-md');
+  gameContainer.innerHTML = `
+    <div class="w-full max-w-md text-center slide-in">
+      <h1 id="title" class="text-3xl font-bold mb-2" style="font-family: 'Space Mono', monospace; color: #e94560;">Spelling</h1>
+      <p class="text-sm mb-8" style="color: #7a7a9d;">Luister naar het woord en typ het juist</p>
+      <div class="rounded-2xl p-6 mb-6" style="background: #16213e; border: 1px solid #2a2a4a; width: 100%; max-width: 600px;">
+        <div class="flex justify-between items-center mb-6">
+          <div class="flex items-center gap-2" style="color: #e94560;">
+            <i data-lucide="trophy" style="width:20px;height:20px;"></i> <span id="score" class="text-xl font-bold">0</span>
+          </div>
+          <div class="flex items-center gap-2" style="color: #22c55e;" id="comboContainer">
+            <i data-lucide="zap" style="width:18px;height:18px;"></i> <span id="combo" class="text-sm font-bold">0x</span>
+          </div>
+        </div>
+        <div id="gridContainer" class="grid grid-cols-5 gap-3 mb-6"></div>
+        <div id="inputWrap" class="relative">
+          <input id="wordInput" type="text" autocomplete="off" autofocus class="w-full text-center text-2xl font-bold py-3 px-4 rounded-xl border-2 outline-none transition-all" style="background: #0f3460; border-color: #2a2a4a; color: #fff; font-family: 'Space Mono', monospace;" placeholder="typ hier...">
+        </div>
+        <div id="feedback" class="mt-4 h-6 text-sm font-medium"></div>
+      </div>
+    </div>
+  `;
+  
+  createGrid();
+  lucide.createIcons();
+  
+  document.getElementById('wordInput').addEventListener('keydown', wordInputHandler);
+}
+
+function wordInputHandler(e) {
+  if (e.key === 'Enter') {
+    if (!selectedBox) {
+      document.getElementById('feedback').innerHTML = `<span style="color:#ef4444;">Kies eerst een vakje!</span>`;
+      return;
+    }
+    
+    const val = e.target.value.trim().toLowerCase();
+    const wrap = document.getElementById('inputWrap');
+    const fb = document.getElementById('feedback');
+    const idx = parseInt(selectedBox.dataset.currentIdx);
+    
+    if (val === currentWord) {
+      combo++;
+      score += combo;
+      document.getElementById('score').textContent = score;
+      updateComboDisplay();
+      
+      const comboText = combo > 1 ? `<span style="color:#22c55e;">✓ Correct! ${combo}x combo!</span>` : `<span style="color:#22c55e;">✓ Correct!</span>`;
+      fb.innerHTML = comboText;
+      wrap.className = 'relative correct-pulse';
+      
+      if (combo > 1) {
+        document.getElementById('combo').classList.add('combo-pop');
+        setTimeout(() => document.getElementById('combo').classList.remove('combo-pop'), 400);
+      }
+      
+      boxStates[idx].attempts++;
+      boxStates[idx].completed = true;
+      boxStates[idx].attempted = false;
+      selectedBox.style.pointerEvents = 'none';
+      
+      const colors = getBoxColor(boxStates[idx].attempts);
+      selectedBox.style.background = colors.bg;
+      selectedBox.style.color = colors.text;
+      selectedBox.style.borderColor = colors.border;
+      selectedBox.textContent = '✓';
+      
+      selectedBox = null;
+      document.getElementById('wordInput').value = '';
+      
+      setTimeout(() => {
+        const allCompleted = Object.values(boxStates).every(state => state.completed);
+        if (allCompleted) {
+          showGameOver();
+        }
+      }, 800);
+    } else {
+      combo = 0;
+      updateComboDisplay();
+      fb.innerHTML = `<span style="color:#ef4444;">✗ Fout! Het was: <strong>${currentWord}</strong></span>`;
+      wrap.className = 'relative wrong-pulse';
+      
+      boxStates[idx].attempts++;
+      boxStates[idx].attempted = true;
+      selectedBox.style.background = '#ef4444';
+      selectedBox.style.color = '#fff';
+      selectedBox.style.borderColor = '#ef4444';
+      selectedBox.style.pointerEvents = 'auto';
+      selectedBox.textContent = '✗';
+      document.getElementById('wordInput').value = '';
+    }
+    
+    round++;
+  }
+}
+
+const defaultConfig = {
+  game_title: 'Spelling',
+  background_color: '#1a1a2e',
+  surface_color: '#16213e',
+  text_color: '#ffffff',
+  primary_action_color: '#e94560',
+  secondary_action_color: '#7a7a9d',
+  font_family: 'DM Sans',
+  font_size: 16
+};
+
+function applyConfig(config) {
+  const bg = config.background_color || defaultConfig.background_color;
+  const surface = config.surface_color || defaultConfig.surface_color;
+  const text = config.text_color || defaultConfig.text_color;
+  const primary = config.primary_action_color || defaultConfig.primary_action_color;
+  const secondary = config.secondary_action_color || defaultConfig.secondary_action_color;
+  const font = config.font_family || defaultConfig.font_family;
+  const size = config.font_size || defaultConfig.font_size;
+
+  const app = document.getElementById('app');
+  app.style.background = bg;
+  app.style.fontFamily = `${font}, sans-serif`;
+
+  document.getElementById('title').textContent = config.game_title || defaultConfig.game_title;
+  document.getElementById('title').style.color = primary;
+
+  document.querySelectorAll('[style*="16213e"]').forEach(el => el.style.background = surface);
+  document.getElementById('wordInput').style.fontSize = `${size * 1.5}px`;
+}
+
+createGrid();
+lucide.createIcons();
+  <\/script>
+ </body>
+</html>`);
+  doc.close();
+}
+</script>
+
+</body>
+</html>
